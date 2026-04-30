@@ -1,705 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Otaku Zone Definitive</title>
-<style>
-    :root {
-        --bg: #0a0a0c; --card: #16161d; --primary: #ff2e4d; --accent: #00f2ff; --text: #f0f0f0; --glass: rgba(255, 255, 255, 0.05);
-    }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); padding-bottom: 110px; overflow-x: hidden; }
-    
-    header { padding: 25px 20px; text-align: center; font-weight: 900; color: var(--primary); text-transform: uppercase; letter-spacing: 4px; font-size: 1.5rem; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Otaku Zone v2.5 - Stable Auth</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --bg: #0a0a0c; --card: #14141b; --primary: #ff2e4d; --accent: #00f2ff; 
+            --text: #f0f0f0; --nav-bg: rgba(18, 18, 24, 0.98);
+            --success: #00d68f; --error: #ff6b6b;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); 
+            padding-bottom: 90px; overflow-x: hidden; font-size: 14px;
+        }
 
-    /* Layout & Cards */
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding: 0 15px; }
-    .card { 
-        background: var(--card); border-radius: 22px; overflow: hidden; position: relative; 
-        height: 270px; border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
-        transition: transform 0.2s; z-index: 1;
-    }
-    .card:active { transform: scale(0.96); }
-    .card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-    
-    .card-overlay { 
-        position: absolute; bottom: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.95)); 
-        padding: 15px; pointer-events: none; 
-    }
-    .card-overlay h4 { margin: 0; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+        /* AUTH OVERLAY */
+        #authOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 50000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { 
+            background: var(--card); padding: 30px; border-radius: 25px; border: 1px solid #222; 
+            width: 100%; max-width: 360px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .auth-card h2 { margin: 0 0 10px; color: var(--primary); text-align: center; letter-spacing: 2px; }
+        .auth-input { 
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #333; 
+            background: #000; color: white; outline: none; font-size: 14px;
+        }
+        .auth-btn { 
+            width: 100%; padding: 12px; margin-top: 10px; border-radius: 10px; border: none; 
+            background: var(--primary); color: white; font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+        .guest-btn {
+            background: transparent; color: #777; border: 1px solid #333; margin-top: 12px;
+            width: 100%; padding: 10px; border-radius: 10px; font-size: 12px; cursor: pointer;
+        }
+        .divider { margin: 20px 0; border-top: 1px solid #222; position: relative; text-align: center; }
+        .divider span { position: absolute; top: -10px; background: var(--card); padding: 0 10px; color: #555; font-size: 10px; left: 50%; transform: translateX(-50%); }
+        .google-btn { 
+            background: white; color: black; border: none; padding: 12px; border-radius: 10px; 
+            width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px;
+        }
 
-    /* Badges */
-    .rating-tag { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.75); padding: 5px 9px; border-radius: 9px; font-size: 10px; color: #ffb800; font-weight: bold; backdrop-filter: blur(4px); z-index: 2; }
-    .fav-btn { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.5); border: none; width: 34px; height: 34px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); z-index: 3; }
+        header { padding: 20px; text-align: center; font-weight: 900; color: var(--primary); letter-spacing: 5px; font-size: 1.4rem; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 15px; }
+        .card { 
+            background: var(--card); border-radius: 18px; overflow: hidden; position: relative; 
+            height: 240px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; 
+        }
+        .card img { width: 100%; height: 100%; object-fit: cover; }
+        .card-info { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.95)); padding: 12px 10px; }
+        .card-info h4 { margin: 0; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* Tracker Alert Animation */
-    @keyframes neonPulse {
-        0% { box-shadow: 0 0 5px var(--accent); border-color: var(--accent); }
-        50% { box-shadow: 0 0 20px var(--accent); border-color: #fff; }
-        100% { box-shadow: 0 0 5px var(--accent); border-color: var(--accent); }
-    }
-    .mission-complete { animation: neonPulse 2s infinite; border: 2px solid var(--accent) !important; }
-    .complete-badge { background: var(--accent); color: #000; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 6px; margin-top: 8px; display: inline-block; }
+        .profile-section { text-align: center; padding: 30px 20px; }
+        #displayPfp { width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover; background: #1a1a24; }
+        
+        .nav-bar { position: fixed; bottom: 15px; left: 15px; right: 15px; background: var(--nav-bg); backdrop-filter: blur(20px); border-radius: 22px; padding: 8px 6px; display: flex; justify-content: space-around; border: 1px solid rgba(255,255,255,0.12); z-index: 10000; }
+        .nav-item { color: #666; font-size: 10px; font-weight: 800; text-align: center; cursor: pointer; padding: 10px 8px; border-radius: 14px; }
+        .nav-item.active { color: var(--primary); background: rgba(255, 46, 77, 0.15); }
 
-    /* Overlays */
-    #detailOverlay, #searchOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: none; overflow-y: auto; padding-bottom: 40px; }
-    .close-circle { position: fixed; top: 25px; right: 25px; background: var(--primary); border: none; color: white; width: 44px; height: 44px; border-radius: 50%; z-index: 10005; cursor: pointer; font-size: 18px; }
-    
-    .det-hero { width: 100%; height: 400px; position: relative; }
-    .det-hero img { width: 100%; height: 100%; object-fit: cover; }
-    .det-content { padding: 30px 20px; background: linear-gradient(to bottom, transparent, var(--bg) 15%); margin-top: -60px; position: relative; }
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        #detailOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 20000; display: none; overflow-y: auto; padding: 20px; }
+        #detailOverlay.active { display: block; }
+        .overlay-close { position: fixed; top: 20px; right: 20px; background: var(--primary); color: white; border: none; width: 42px; height: 42px; border-radius: 50%; z-index: 100; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-    /* Forms & Buttons */
-    .search-box { padding: 0 15px 20px; }
-    #searchInput { width: 100%; padding: 16px 20px; border-radius: 18px; border: 1px solid #333; background: var(--card); color: white; outline: none; }
-    
-    .glass-card { background: var(--glass); border: 1px solid rgba(255,255,255,0.08); padding: 20px; border-radius: 24px; margin: 0 15px 15px; position: relative; }
-    .btn-main { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 800; width: 100%; cursor: pointer; letter-spacing: 1px; }
-    .btn-more { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 14px; border-radius: 14px; width: calc(100% - 30px); margin: 20px 15px; font-weight: bold; cursor: pointer; }
-
-    /* Nav Bar */
-    .nav-bar { 
-        position: fixed; bottom: 20px; left: 20px; right: 20px; 
-        background: rgba(22, 22, 29, 0.95); backdrop-filter: blur(25px); 
-        border-radius: 28px; padding: 12px 5px; display: flex; justify-content: space-around; 
-        border: 1px solid rgba(255,255,255,0.1); z-index: 9000;
-    }
-    .nav-item { display: flex; flex-direction: column; align-items: center; color: #555; cursor: pointer; flex: 1; }
-    .nav-item svg { width: 22px; height: 22px; margin-bottom: 4px; stroke: currentColor; fill: none; stroke-width: 2.2; }
-    .nav-item.active { color: var(--primary); }
-    .nav-item span { font-size: 9px; font-weight: 800; }
-
-    .section { display: none; animation: fadeIn 0.3s ease; }
-    .section.active { display: block; }
-    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
-</style>
+        .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1a1a24; color: white; padding: 12px 20px; border-radius: 14px; border-left: 4px solid var(--success); z-index: 40000; transition: transform 0.3s ease; max-width: 90%; text-align: center; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+    </style>
 </head>
 <body>
+
+<div id="authOverlay">
+    <div class="auth-card">
+        <h2>OTAKU ZONE</h2>
+        <input type="email" id="email" class="auth-input" placeholder="Email Address">
+        <input type="password" id="password" class="auth-input" placeholder="Password">
+        <button class="auth-btn" onclick="emailLogin()">Sign In</button>
+        <button class="guest-btn" onclick="signInLater()">Browse as Guest</button>
+        <div class="divider"><span>OR CONTINUE WITH</span></div>
+        <button class="google-btn" id="googleBtn" onclick="googleLogin()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" alt="G" width="20"> Google Account
+        </button>
+    </div>
+</div>
 
 <header>Otaku Zone</header>
 
 <div id="home" class="section active">
-    <div class="search-box"><input id="searchInput" placeholder="Search Database..." autocomplete="off"></div>
+    <div style="padding: 0 15px 15px;">
+        <input id="searchInput" placeholder="🔍 Search Anime..." style="width: 100%; padding: 12px 16px; border-radius: 12px; background: var(--card); border: 1px solid #333; color: white;">
+    </div>
     <div id="grid" class="grid"></div>
-    <button class="btn-more" id="homeMore" onclick="loadMore()">LOAD MORE TITLES</button>
-</div>
-
-<div id="art" class="section">
-    <div style="padding:20px; display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="margin:0;">Gallery Core</h3>
-        <button onclick="loadArt()" style="background:none; border:none; color:var(--primary); font-weight:bold;">REFRESH</button>
-    </div>
-    <div id="artGrid" class="grid"></div>
-</div>
-
-<div id="track" class="section">
-    <div style="padding: 20px"><h3>Missions 📅</h3></div>
-    <div id="planList"></div>
-</div>
-
-<div id="recommend" class="section">
-    <div class="glass-card" style="text-align: center;">
-        <h2 style="color: var(--primary); margin-top:0;">AI Engine</h2>
-        <button class="btn-main" onclick="generateAI()">SCAN FOR PICKS</button>
-    </div>
-    <div id="aiGrid" class="grid"></div>
 </div>
 
 <div id="fav" class="section">
-    <div style="padding: 20px"><h3>Neural Core ❤️</h3></div>
-    <div id="favGrid" class="grid"></div>
-</div>
-
-<div id="searchOverlay">
-    <button class="close-circle" onclick="closeSearch()">✕</button>
-    <div style="padding: 80px 20px 20px;"><h2>Results</h2></div>
-    <div id="searchGrid" class="grid"></div>
+    <div class="profile-section">
+        <img id="displayPfp" src="" alt="Profile">
+        <h2 id="displayName">Guest User</h2>
+        <button class="auth-btn" style="max-width: 200px;" onclick="logout()">LOGOUT / RESET</button>
+    </div>
 </div>
 
 <div id="detailOverlay">
-    <button class="close-circle" onclick="closeDetails()">✕</button>
-    <div class="det-hero"><img id="detPoster" src=""></div>
-    <div class="det-content">
-        <h1 id="detTitle" style="margin:0;"></h1>
-        <div style="display:flex; gap:12px; margin: 20px 0; font-size:12px; font-weight:bold;">
-            <span id="detScore" style="color:gold"></span>
-            <span id="detEps" style="color:var(--accent)"></span>
-            <span id="detStatus" style="color:#777"></span>
-        </div>
-        <p id="detSynopsis" style="color:#bbb; line-height:1.7; font-size:14px; margin-bottom:30px;"></p>
-        <div class="glass-card" style="margin:0 0 20px 0">
-            <label style="font-size:10px; color:var(--accent)">TARGET FINISH DATE:</label>
-            <input type="date" id="targetDate" style="width:100%; padding:12px; background:rgba(0,0,0,0.4); border:1px solid #444; color:white; border-radius:12px; margin-top:8px;">
-        </div>
-        <button class="btn-main" onclick="addCurrentToTracker()">+ SYNC TO TRACKER</button>
-    </div>
+    <button class="overlay-close" onclick="closeOverlay()">✕</button>
+    <img id="detImg" src="" style="width: 100%; height: 40vh; object-fit: cover; border-radius: 15px;">
+    <h2 id="detTitle" style="padding: 15px; margin-bottom: 0;"></h2>
+    <p id="detSyn" style="padding: 0 15px; color:#aaa; line-height: 1.6;"></p>
 </div>
+
+<div id="toast" class="toast"></div>
 
 <nav class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('home',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>HOME</span></div>
-    <div class="nav-item" onclick="switchTab('art',this)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>ART</span></div>
-    <div class="nav-item" onclick="switchTab('track',this)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>TRACK</span></div>
-    <div class="nav-item" onclick="switchTab('recommend',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>AI</span></div>
-    <div class="nav-item" onclick="switchTab('fav',this)"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>CORE</span></div>
+    <div class="nav-item active" onclick="switchTab('home', this)">HOME</div>
+    <div class="nav-item" onclick="switchTab('fav', this)">CORE</div>
 </nav>
 
-<script>
-let currentPage = 1, homeData = [], searchTimer;
-let favs = JSON.parse(localStorage.getItem("favs") || "[]");
-let plans = JSON.parse(localStorage.getItem("plans") || "[]");
-let currentViewedAnime = null;
-
-async function api(url) { try { let r = await fetch(url); return await r.json(); } catch(e) { return null; } }
-
-// --- SEARCH ENGINE ---
-document.getElementById('searchInput').addEventListener('input', (e) => {
-    clearTimeout(searchTimer);
-    const q = e.target.value;
-    if(q.length < 3) return;
-    searchTimer = setTimeout(async () => {
-        document.getElementById('searchOverlay').style.display = 'block';
-        document.getElementById('searchGrid').innerHTML = "<p style='padding:20px'>Searching Archives...</p>";
-        let r = await api(`https://api.jikan.moe/v4/anime?q=${q}&limit=12`);
-        if(r) render('searchGrid', r.data);
-    }, 700);
-});
-function closeSearch() { document.getElementById('searchOverlay').style.display = 'none'; document.getElementById('searchInput').value = ""; }
-
-// --- RENDERER ---
-function render(containerId, list, append = false) {
-    const container = document.getElementById(containerId);
-    if(!append) container.innerHTML = "";
-    list.forEach(a => {
-        const isFav = favs.some(f => f.mal_id === a.mal_id);
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.onclick = () => openDetails(a.mal_id);
-        card.innerHTML = `
-            <div class="rating-tag">★ ${a.score || 'N/A'}</div>
-            <button class="fav-btn" onclick="event.stopPropagation(); toggleFav(${a.mal_id})">
-                <svg viewBox="0 0 24 24" style="fill:${isFav ? 'var(--primary)' : 'none'}; stroke:${isFav ? 'var(--primary)' : '#fff'}"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </button>
-            <img src="${a.images.jpg.image_url}" loading="lazy">
-            <div class="card-overlay"><h4>${a.title}</h4></div>
-        `;
-        container.appendChild(card);
-    });
-}
-
-// --- CORE LOGIC ---
-async function openDetails(id) {
-    const overlay = document.getElementById("detailOverlay");
-    overlay.style.display = "block";
-    document.body.style.overflow = "hidden";
-    let r = await api(`https://api.jikan.moe/v4/anime/${id}/full`);
-    if(r && r.data) {
-        currentViewedAnime = r.data;
-        document.getElementById("detPoster").src = r.data.images.jpg.large_image_url;
-        document.getElementById("detTitle").innerText = r.data.title;
-        document.getElementById("detScore").innerText = `★ ${r.data.score || 'N/A'}`;
-        document.getElementById("detEps").innerText = `${r.data.episodes || '?'} Episodes`;
-        document.getElementById("detStatus").innerText = r.data.status;
-        document.getElementById("detSynopsis").innerText = r.data.synopsis || "No summary available.";
-    }
-}
-function closeDetails() { document.getElementById("detailOverlay").style.display = "none"; document.body.style.overflow = "auto"; }
-
-function toggleFav(id) {
-    let anime = homeData.find(a => a.mal_id === id) || currentViewedAnime;
-    let idx = favs.findIndex(f => f.mal_id === id);
-    if(idx === -1) favs.push(anime); else favs.splice(idx, 1);
-    localStorage.setItem("favs", JSON.stringify(favs));
-    render('grid', homeData); // Refresh home icons
-    if(document.getElementById('fav').classList.contains('active')) render('favGrid', favs);
-}
-
-// --- TRACKER MISSION LOGIC ---
-function addCurrentToTracker() {
-    const tDate = document.getElementById("targetDate").value;
-    if(!tDate) return alert("Please select a target date.");
-    plans.push({ t: currentViewedAnime.title, d: tDate });
-    localStorage.setItem("plans", JSON.stringify(plans));
-    alert("Mission Logged!");
-    closeDetails();
-}
-
-function renderPlans() {
-    const list = document.getElementById("planList");
-    list.innerHTML = plans.length ? "" : "<p style='text-align:center; color:#555'>No active missions.</p>";
-    const today = new Date().toISOString().split('T')[0];
-    plans.forEach((p, i) => {
-        const isComplete = today >= p.d;
-        list.innerHTML += `
-            <div class="glass-card ${isComplete ? 'mission-complete' : ''}">
-                <strong style="font-size:16px">${p.t}</strong><br>
-                <small style="color:#888">Target Date: ${p.d}</small>
-                ${isComplete ? '<br><span class="complete-badge">MISSION COMPLETE</span>' : ''}
-                <span onclick="delPlan(${i})" style="position:absolute; top:20px; right:20px; color:var(--primary); font-weight:bold; cursor:pointer">✕</span>
-            </div>`;
-    });
-}
-function delPlan(i) { plans.splice(i, 1); localStorage.setItem("plans", JSON.stringify(plans)); renderPlans(); }
-
-// --- NAV & TABS ---
-function switchTab(id, el) {
-    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-    document.getElementById(id).classList.add('active');
-    document.querySelectorAll(".nav-item").forEach(t => t.classList.remove("active"));
-    el.classList.add("active");
-    if(id === 'track') renderPlans();
-    if(id === 'fav') render('favGrid', favs);
-}
-
-async function loadArt() {
-    let r = await api("https://api.waifu.im/search?limit=12");
-    if(r) {
-        const g = document.getElementById('artGrid'); g.innerHTML = "";
-        r.images.forEach(img => { g.innerHTML += `<div class="card" style="height:320px"><img src="${img.url}"></div>`; });
-    }
-}
-
-async function generateAI() {
-    let r = await api(`https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=10`);
-    if(r) render('aiGrid', r.data);
-}
-
-// --- BOOTSTRAP ---
-async function init() {
-    let r = await api(`https://api.jikan.moe/v4/top/anime?limit=12&page=${currentPage}`);
-    if(r) {
-        homeData = currentPage === 1 ? r.data : [...homeData, ...r.data];
-        render('grid', r.data, currentPage > 1);
-    }
-}
-function loadMore() { currentPage++; init(); }
-
-init();
-</script>
-</body>
-</html>    @keyframes neonPulse {
-        0% { box-shadow: 0 0 5px var(--accent); border-color: var(--accent); }
-        50% { box-shadow: 0 0 20px var(--accent); border-color: #fff; }
-        100% { box-shadow: 0 0 5px var(--accent); border-color: var(--accent); }
-    }
-    .mission-complete { animation: neonPulse 2s infinite; border: 2px solid var(--accent) !important; }
-    .complete-badge { background: var(--accent); color: #000; font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 6px; margin-top: 8px; display: inline-block; }
-
-    /* Overlays */
-    #detailOverlay, #searchOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: none; overflow-y: auto; padding-bottom: 40px; }
-    .close-circle { position: fixed; top: 25px; right: 25px; background: var(--primary); border: none; color: white; width: 44px; height: 44px; border-radius: 50%; z-index: 10005; cursor: pointer; font-size: 18px; }
-    
-    .det-hero { width: 100%; height: 400px; position: relative; }
-    .det-hero img { width: 100%; height: 100%; object-fit: cover; }
-    .det-content { padding: 30px 20px; background: linear-gradient(to bottom, transparent, var(--bg) 15%); margin-top: -60px; position: relative; }
-
-    /* Forms & Buttons */
-    .search-box { padding: 0 15px 20px; }
-    #searchInput { width: 100%; padding: 16px 20px; border-radius: 18px; border: 1px solid #333; background: var(--card); color: white; outline: none; }
-    
-    .glass-card { background: var(--glass); border: 1px solid rgba(255,255,255,0.08); padding: 20px; border-radius: 24px; margin: 0 15px 15px; position: relative; }
-    .btn-main { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 800; width: 100%; cursor: pointer; letter-spacing: 1px; }
-    .btn-more { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 14px; border-radius: 14px; width: calc(100% - 30px); margin: 20px 15px; font-weight: bold; cursor: pointer; }
-
-    /* Nav Bar */
-    .nav-bar { 
-        position: fixed; bottom: 20px; left: 20px; right: 20px; 
-        background: rgba(22, 22, 29, 0.95); backdrop-filter: blur(25px); 
-        border-radius: 28px; padding: 12px 5px; display: flex; justify-content: space-around; 
-        border: 1px solid rgba(255,255,255,0.1); z-index: 9000;
-    }
-    .nav-item { display: flex; flex-direction: column; align-items: center; color: #555; cursor: pointer; flex: 1; }
-    .nav-item svg { width: 22px; height: 22px; margin-bottom: 4px; stroke: currentColor; fill: none; stroke-width: 2.2; }
-    .nav-item.active { color: var(--primary); }
-    .nav-item span { font-size: 9px; font-weight: 800; }
-
-    .section { display: none; animation: fadeIn 0.3s ease; }
-    .section.active { display: block; }
-    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
-</style>
-</head>
-<body>
-
-<header>Otaku Zone</header>
-
-<div id="home" class="section active">
-    <div class="search-box"><input id="searchInput" placeholder="Search Database..." autocomplete="off"></div>
-    <div id="grid" class="grid"></div>
-    <button class="btn-more" id="homeMore" onclick="loadMore()">LOAD MORE TITLES</button>
-</div>
-
-<div id="art" class="section">
-    <div style="padding:20px; display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="margin:0;">Gallery Core</h3>
-        <button onclick="loadArt()" style="background:none; border:none; color:var(--primary); font-weight:bold;">REFRESH</button>
-    </div>
-    <div id="artGrid" class="grid"></div>
-</div>
-
-<div id="track" class="section">
-    <div style="padding: 20px"><h3>Missions 📅</h3></div>
-    <div id="planList"></div>
-</div>
-
-<div id="recommend" class="section">
-    <div class="glass-card" style="text-align: center;">
-        <h2 style="color: var(--primary); margin-top:0;">AI Engine</h2>
-        <button class="btn-main" onclick="generateAI()">SCAN FOR PICKS</button>
-    </div>
-    <div id="aiGrid" class="grid"></div>
-</div>
-
-<div id="fav" class="section">
-    <div style="padding: 20px"><h3>Neural Core ❤️</h3></div>
-    <div id="favGrid" class="grid"></div>
-</div>
-
-<div id="searchOverlay">
-    <button class="close-circle" onclick="closeSearch()">✕</button>
-    <div style="padding: 80px 20px 20px;"><h2>Results</h2></div>
-    <div id="searchGrid" class="grid"></div>
-</div>
-
-<div id="detailOverlay">
-    <button class="close-circle" onclick="closeDetails()">✕</button>
-    <div class="det-hero"><img id="detPoster" src=""></div>
-    <div class="det-content">
-        <h1 id="detTitle" style="margin:0;"></h1>
-        <div style="display:flex; gap:12px; margin: 20px 0; font-size:12px; font-weight:bold;">
-            <span id="detScore" style="color:gold"></span>
-            <span id="detEps" style="color:var(--accent)"></span>
-            <span id="detStatus" style="color:#777"></span>
-        </div>
-        <p id="detSynopsis" style="color:#bbb; line-height:1.7; font-size:14px; margin-bottom:30px;"></p>
-        <div class="glass-card" style="margin:0 0 20px 0">
-            <label style="font-size:10px; color:var(--accent)">TARGET FINISH DATE:</label>
-            <input type="date" id="targetDate" style="width:100%; padding:12px; background:rgba(0,0,0,0.4); border:1px solid #444; color:white; border-radius:12px; margin-top:8px;">
-        </div>
-        <button class="btn-main" onclick="addCurrentToTracker()">+ SYNC TO TRACKER</button>
-    </div>
-</div>
-
-<nav class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('home',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>HOME</span></div>
-    <div class="nav-item" onclick="switchTab('art',this)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>ART</span></div>
-    <div class="nav-item" onclick="switchTab('track',this)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>TRACK</span></div>
-    <div class="nav-item" onclick="switchTab('recommend',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>AI</span></div>
-    <div class="nav-item" onclick="switchTab('fav',this)"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>CORE</span></div>
-</nav>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
 <script>
-let currentPage = 1, homeData = [], searchTimer;
-let favs = JSON.parse(localStorage.getItem("favs") || "[]");
-let plans = JSON.parse(localStorage.getItem("plans") || "[]");
-let currentViewedAnime = null;
+// YOUR FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyA-9lpQMIJA9Qq1W8s3jJHswQcU2C4xA8E",
+  authDomain: "otaku-zone-aut.firebaseapp.com",
+  projectId: "otaku-zone-aut",
+  storageBucket: "otaku-zone-aut.firebasestorage.app",
+  messagingSenderId: "55377515369",
+  appId: "1:55377515369:web:634be1b3360e067f3a23f8"
+};
 
-async function api(url) { try { let r = await fetch(url); return await r.json(); } catch(e) { return null; } }
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+let isGuest = false;
 
-// --- SEARCH ENGINE ---
-document.getElementById('searchInput').addEventListener('input', (e) => {
-    clearTimeout(searchTimer);
-    const q = e.target.value;
-    if(q.length < 3) return;
-    searchTimer = setTimeout(async () => {
-        document.getElementById('searchOverlay').style.display = 'block';
-        document.getElementById('searchGrid').innerHTML = "<p style='padding:20px'>Searching Archives...</p>";
-        let r = await api(`https://api.jikan.moe/v4/anime?q=${q}&limit=12`);
-        if(r) render('searchGrid', r.data);
-    }, 700);
+// 1. GOOGLE LOGIN (REDIRECT)
+function googleLogin() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithRedirect(provider);
+}
+
+// 2. CHECK REDIRECT RESULT ON PAGE LOAD
+auth.getRedirectResult().then((result) => {
+    if (result.user) {
+        showToast("Logged in via Google! ✨");
+    }
+}).catch((error) => {
+    if (error.code !== 'auth/no-auth-event') {
+        showToast("Error: " + error.message);
+    }
 });
-function closeSearch() { document.getElementById('searchOverlay').style.display = 'none'; document.getElementById('searchInput').value = ""; }
 
-// --- RENDERER ---
-function render(containerId, list, append = false) {
-    const container = document.getElementById(containerId);
-    if(!append) container.innerHTML = "";
-    list.forEach(a => {
-        const isFav = favs.some(f => f.mal_id === a.mal_id);
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.onclick = () => openDetails(a.mal_id);
-        card.innerHTML = `
-            <div class="rating-tag">★ ${a.score || 'N/A'}</div>
-            <button class="fav-btn" onclick="event.stopPropagation(); toggleFav(${a.mal_id})">
-                <svg viewBox="0 0 24 24" style="fill:${isFav ? 'var(--primary)' : 'none'}; stroke:${isFav ? 'var(--primary)' : '#fff'}"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </button>
-            <img src="${a.images.jpg.image_url}" loading="lazy">
-            <div class="card-overlay"><h4>${a.title}</h4></div>
-        `;
-        container.appendChild(card);
-    });
-}
-
-// --- CORE LOGIC ---
-async function openDetails(id) {
-    const overlay = document.getElementById("detailOverlay");
-    overlay.style.display = "block";
-    document.body.style.overflow = "hidden";
-    let r = await api(`https://api.jikan.moe/v4/anime/${id}/full`);
-    if(r && r.data) {
-        currentViewedAnime = r.data;
-        document.getElementById("detPoster").src = r.data.images.jpg.large_image_url;
-        document.getElementById("detTitle").innerText = r.data.title;
-        document.getElementById("detScore").innerText = `★ ${r.data.score || 'N/A'}`;
-        document.getElementById("detEps").innerText = `${r.data.episodes || '?'} Episodes`;
-        document.getElementById("detStatus").innerText = r.data.status;
-        document.getElementById("detSynopsis").innerText = r.data.synopsis || "No summary available.";
+// 3. LISTEN FOR USER CHANGES
+auth.onAuthStateChanged(user => {
+    if (user) {
+        document.getElementById('authOverlay').style.display = 'none';
+        document.getElementById('displayName').textContent = user.displayName || user.email;
+        document.getElementById('displayPfp').src = user.photoURL || "https://ui-avatars.com/api/?name=User";
+        init();
+    } else if (!isGuest) {
+        document.getElementById('authOverlay').style.display = 'flex';
     }
-}
-function closeDetails() { document.getElementById("detailOverlay").style.display = "none"; document.body.style.overflow = "auto"; }
-
-function toggleFav(id) {
-    let anime = homeData.find(a => a.mal_id === id) || currentViewedAnime;
-    let idx = favs.findIndex(f => f.mal_id === id);
-    if(idx === -1) favs.push(anime); else favs.splice(idx, 1);
-    localStorage.setItem("favs", JSON.stringify(favs));
-    render('grid', homeData); // Refresh home icons
-    if(document.getElementById('fav').classList.contains('active')) render('favGrid', favs);
-}
-
-// --- TRACKER MISSION LOGIC ---
-function addCurrentToTracker() {
-    const tDate = document.getElementById("targetDate").value;
-    if(!tDate) return alert("Please select a target date.");
-    plans.push({ t: currentViewedAnime.title, d: tDate });
-    localStorage.setItem("plans", JSON.stringify(plans));
-    alert("Mission Logged!");
-    closeDetails();
-}
-
-function renderPlans() {
-    const list = document.getElementById("planList");
-    list.innerHTML = plans.length ? "" : "<p style='text-align:center; color:#555'>No active missions.</p>";
-    const today = new Date().toISOString().split('T')[0];
-    plans.forEach((p, i) => {
-        const isComplete = today >= p.d;
-        list.innerHTML += `
-            <div class="glass-card ${isComplete ? 'mission-complete' : ''}">
-                <strong style="font-size:16px">${p.t}</strong><br>
-                <small style="color:#888">Target Date: ${p.d}</small>
-                ${isComplete ? '<br><span class="complete-badge">MISSION COMPLETE</span>' : ''}
-                <span onclick="delPlan(${i})" style="position:absolute; top:20px; right:20px; color:var(--primary); font-weight:bold; cursor:pointer">✕</span>
-            </div>`;
-    });
-}
-function delPlan(i) { plans.splice(i, 1); localStorage.setItem("plans", JSON.stringify(plans)); renderPlans(); }
-
-// --- NAV & TABS ---
-function switchTab(id, el) {
-    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-    document.getElementById(id).classList.add('active');
-    document.querySelectorAll(".nav-item").forEach(t => t.classList.remove("active"));
-    el.classList.add("active");
-    if(id === 'track') renderPlans();
-    if(id === 'fav') render('favGrid', favs);
-}
-
-async function loadArt() {
-    let r = await api("https://api.waifu.im/search?limit=12");
-    if(r) {
-        const g = document.getElementById('artGrid'); g.innerHTML = "";
-        r.images.forEach(img => { g.innerHTML += `<div class="card" style="height:320px"><img src="${img.url}"></div>`; });
-    }
-}
-
-async function generateAI() {
-    let r = await api(`https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=10`);
-    if(r) render('aiGrid', r.data);
-}
-
-// --- BOOTSTRAP ---
-async function init() {
-    let r = await api(`https://api.jikan.moe/v4/top/anime?limit=12&page=${currentPage}`);
-    if(r) {
-        homeData = currentPage === 1 ? r.data : [...homeData, ...r.data];
-        render('grid', r.data, currentPage > 1);
-    }
-}
-function loadMore() { currentPage++; init(); }
-
-init();
-</script>
-</body>
-</html>    <div id="planList"></div>
-</div>
-
-<div id="recommend" class="section">
-    <div class="glass-card" style="text-align: center;">
-        <h2 style="color: var(--primary); margin-top:0;">AI Engine</h2>
-        <button class="btn-main" onclick="generateAI()">SCAN FOR PICKS</button>
-    </div>
-    <div id="aiGrid" class="grid"></div>
-</div>
-
-<div id="fav" class="section">
-    <div style="padding: 20px"><h3>Neural Core ❤️</h3></div>
-    <div id="favGrid" class="grid"></div>
-</div>
-
-<div id="searchOverlay">
-    <button class="close-circle" onclick="closeSearch()">✕</button>
-    <div style="padding: 80px 20px 20px;"><h2>Results</h2></div>
-    <div id="searchGrid" class="grid"></div>
-</div>
-
-<div id="detailOverlay">
-    <button class="close-circle" onclick="closeDetails()">✕</button>
-    <div class="det-hero"><img id="detPoster" src=""></div>
-    <div class="det-content">
-        <h1 id="detTitle" style="margin:0;"></h1>
-        <div style="display:flex; gap:12px; margin: 20px 0; font-size:12px; font-weight:bold;">
-            <span id="detScore" style="color:gold"></span>
-            <span id="detEps" style="color:var(--accent)"></span>
-            <span id="detStatus" style="color:#777"></span>
-        </div>
-        <p id="detSynopsis" style="color:#bbb; line-height:1.7; font-size:14px; margin-bottom:30px;"></p>
-        <div class="glass-card" style="margin:0 0 20px 0">
-            <label style="font-size:10px; color:var(--accent)">TARGET FINISH DATE:</label>
-            <input type="date" id="targetDate" style="width:100%; padding:12px; background:rgba(0,0,0,0.4); border:1px solid #444; color:white; border-radius:12px; margin-top:8px;">
-        </div>
-        <button class="btn-main" onclick="addCurrentToTracker()">+ SYNC TO TRACKER</button>
-    </div>
-</div>
-
-<nav class="nav-bar">
-    <div class="nav-item active" onclick="switchTab('home',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>HOME</span></div>
-    <div class="nav-item" onclick="switchTab('art',this)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>ART</span></div>
-    <div class="nav-item" onclick="switchTab('track',this)"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>TRACK</span></div>
-    <div class="nav-item" onclick="switchTab('recommend',this)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>AI</span></div>
-    <div class="nav-item" onclick="switchTab('fav',this)"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>CORE</span></div>
-</nav>
-
-<script>
-let currentPage = 1, homeData = [], searchTimer;
-let favs = JSON.parse(localStorage.getItem("favs") || "[]");
-let plans = JSON.parse(localStorage.getItem("plans") || "[]");
-let currentViewedAnime = null;
-
-async function api(url) { try { let r = await fetch(url); return await r.json(); } catch(e) { return null; } }
-
-// --- SEARCH ENGINE ---
-document.getElementById('searchInput').addEventListener('input', (e) => {
-    clearTimeout(searchTimer);
-    const q = e.target.value;
-    if(q.length < 3) return;
-    searchTimer = setTimeout(async () => {
-        document.getElementById('searchOverlay').style.display = 'block';
-        document.getElementById('searchGrid').innerHTML = "<p style='padding:20px'>Searching Archives...</p>";
-        let r = await api(`https://api.jikan.moe/v4/anime?q=${q}&limit=12`);
-        if(r) render('searchGrid', r.data);
-    }, 700);
 });
-function closeSearch() { document.getElementById('searchOverlay').style.display = 'none'; document.getElementById('searchInput').value = ""; }
 
-// --- RENDERER ---
-function render(containerId, list, append = false) {
-    const container = document.getElementById(containerId);
-    if(!append) container.innerHTML = "";
-    list.forEach(a => {
-        const isFav = favs.some(f => f.mal_id === a.mal_id);
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.onclick = () => openDetails(a.mal_id);
-        card.innerHTML = `
-            <div class="rating-tag">★ ${a.score || 'N/A'}</div>
-            <button class="fav-btn" onclick="event.stopPropagation(); toggleFav(${a.mal_id})">
-                <svg viewBox="0 0 24 24" style="fill:${isFav ? 'var(--primary)' : 'none'}; stroke:${isFav ? 'var(--primary)' : '#fff'}"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.82-8.82 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </button>
-            <img src="${a.images.jpg.image_url}" loading="lazy">
-            <div class="card-overlay"><h4>${a.title}</h4></div>
-        `;
-        container.appendChild(card);
-    });
+function signInLater() {
+    isGuest = true;
+    document.getElementById('authOverlay').style.display = 'none';
+    init();
 }
 
-// --- CORE LOGIC ---
-async function openDetails(id) {
-    const overlay = document.getElementById("detailOverlay");
-    overlay.style.display = "block";
-    document.body.style.overflow = "hidden";
-    let r = await api(`https://api.jikan.moe/v4/anime/${id}/full`);
-    if(r && r.data) {
-        currentViewedAnime = r.data;
-        document.getElementById("detPoster").src = r.data.images.jpg.large_image_url;
-        document.getElementById("detTitle").innerText = r.data.title;
-        document.getElementById("detScore").innerText = `★ ${r.data.score || 'N/A'}`;
-        document.getElementById("detEps").innerText = `${r.data.episodes || '?'} Episodes`;
-        document.getElementById("detStatus").innerText = r.data.status;
-        document.getElementById("detSynopsis").innerText = r.data.synopsis || "No summary available.";
-    }
-}
-function closeDetails() { document.getElementById("detailOverlay").style.display = "none"; document.body.style.overflow = "auto"; }
-
-function toggleFav(id) {
-    let anime = homeData.find(a => a.mal_id === id) || currentViewedAnime;
-    let idx = favs.findIndex(f => f.mal_id === id);
-    if(idx === -1) favs.push(anime); else favs.splice(idx, 1);
-    localStorage.setItem("favs", JSON.stringify(favs));
-    render('grid', homeData); // Refresh home icons
-    if(document.getElementById('fav').classList.contains('active')) render('favGrid', favs);
-}
-
-// --- TRACKER MISSION LOGIC ---
-function addCurrentToTracker() {
-    const tDate = document.getElementById("targetDate").value;
-    if(!tDate) return alert("Please select a target date.");
-    plans.push({ t: currentViewedAnime.title, d: tDate });
-    localStorage.setItem("plans", JSON.stringify(plans));
-    alert("Mission Logged!");
-    closeDetails();
-}
-
-function renderPlans() {
-    const list = document.getElementById("planList");
-    list.innerHTML = plans.length ? "" : "<p style='text-align:center; color:#555'>No active missions.</p>";
-    const today = new Date().toISOString().split('T')[0];
-    plans.forEach((p, i) => {
-        const isComplete = today >= p.d;
-        list.innerHTML += `
-            <div class="glass-card ${isComplete ? 'mission-complete' : ''}">
-                <strong style="font-size:16px">${p.t}</strong><br>
-                <small style="color:#888">Target Date: ${p.d}</small>
-                ${isComplete ? '<br><span class="complete-badge">MISSION COMPLETE</span>' : ''}
-                <span onclick="delPlan(${i})" style="position:absolute; top:20px; right:20px; color:var(--primary); font-weight:bold; cursor:pointer">✕</span>
-            </div>`;
-    });
-}
-function delPlan(i) { plans.splice(i, 1); localStorage.setItem("plans", JSON.stringify(plans)); renderPlans(); }
-
-// --- NAV & TABS ---
-function switchTab(id, el) {
-    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-    document.getElementById(id).classList.add('active');
-    document.querySelectorAll(".nav-item").forEach(t => t.classList.remove("active"));
-    el.classList.add("active");
-    if(id === 'track') renderPlans();
-    if(id === 'fav') render('favGrid', favs);
-}
-
-async function loadArt() {
-    let r = await api("https://api.waifu.im/search?limit=12");
-    if(r) {
-        const g = document.getElementById('artGrid'); g.innerHTML = "";
-        r.images.forEach(img => { g.innerHTML += `<div class="card" style="height:320px"><img src="${img.url}"></div>`; });
-    }
-}
-
-async function generateAI() {
-    let r = await api(`https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=10`);
-    if(r) render('aiGrid', r.data);
-}
-
-// --- BOOTSTRAP ---
 async function init() {
-    let r = await api(`https://api.jikan.moe/v4/top/anime?limit=12&page=${currentPage}`);
-    if(r) {
-        homeData = currentPage === 1 ? r.data : [...homeData, ...r.data];
-        render('grid', r.data, currentPage > 1);
+    try {
+        const response = await fetch(`https://api.jikan.moe/v4/top/anime?limit=14`);
+        const json = await response.json();
+        render('grid', json.data);
+    } catch (e) {
+        showToast("Failed to load anime data.");
     }
 }
-function loadMore() { currentPage++; init(); }
 
-init();
+function render(containerId, list) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = list.map(a => `
+        <div class="card" onclick="openDet(${a.mal_id})">
+            <img src="${a.images.jpg.image_url}">
+            <div class="card-info"><h4>${a.title}</h4></div>
+        </div>
+    `).join('');
+}
+
+window.openDet = async (id) => {
+    const r = await fetch(`https://api.jikan.moe/v4/anime/${id}`);
+    const json = await r.json();
+    const a = json.data;
+    document.getElementById('detImg').src = a.images.jpg.large_image_url;
+    document.getElementById('detTitle').textContent = a.title;
+    document.getElementById('detSyn').textContent = a.synopsis || "No summary available.";
+    document.getElementById('detailOverlay').classList.add('active');
+};
+
+window.closeOverlay = () => document.getElementById('detailOverlay').classList.remove('active');
+window.logout = () => auth.signOut().then(() => location.reload());
+
+window.showToast = (m) => {
+    const t = document.getElementById('toast');
+    t.textContent = m;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+};
+
+function switchTab(id, el) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    el.classList.add('active');
+}
 </script>
 </body>
 </html>
